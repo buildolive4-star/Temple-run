@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   Play,
   RotateCcw,
@@ -11,6 +11,11 @@ import {
   Wind,
   ScrollText,
   Crown,
+  BookOpen,
+  Download,
+  Github,
+  Smartphone,
+  ExternalLink,
 } from 'lucide-react';
 import { getTimeUntilResetText } from '../game/missions';
 import type { HeroId, HudSnapshot } from '../game/types';
@@ -63,6 +68,32 @@ export const GameModals: React.FC<GameModalsProps> = ({
   const [glbBusyUid, setGlbBusyUid] = useState<string | null>(null);
   const [glbError, setGlbError] = useState('');
   const [missionsOpen, setMissionsOpen] = useState(false);
+  const [codexOpen, setCodexOpen] = useState(false);
+  const [downloadOpen, setDownloadOpen] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (installPrompt) {
+      installPrompt.prompt();
+      const { outcome } = await installPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setInstallPrompt(null);
+      }
+    } else {
+      window.alert(
+        "To install Surya Run as an app on your phone or PC: Open your browser menu (three dots in Chrome) and select 'Install app' or 'Add to Home Screen'. On iPhone Safari, tap the Share button and select 'Add to Home Screen'.",
+      );
+    }
+  };
 
   if (
     hud.phase === 'playing' ||
@@ -114,11 +145,11 @@ export const GameModals: React.FC<GameModalsProps> = ({
 
   if (hud.phase === 'title') {
     return (
-      <div className="pointer-events-none fixed inset-0 z-10 flex flex-col items-center justify-between px-4 py-5 sm:py-8">
+      <div className="pointer-events-none fixed inset-0 z-10 flex flex-col items-center justify-between px-4 py-4 sm:py-6 overflow-y-auto">
         {/* Top Title Lockup & Unboxed Record Metadata */}
         <div className="pointer-events-auto flex flex-col items-center text-center mt-1">
           <TitleSvg />
-          <div className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs font-semibold tracking-wide text-[#e9d8b4] tabular-nums">
+          <div className="mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs font-semibold tracking-wide text-[#e9d8b4] tabular-nums">
             {hud.bestScore > 0 && (
               <>
                 <span className="inline-flex items-center gap-1.5 text-[#f4cf75]">
@@ -138,13 +169,33 @@ export const GameModals: React.FC<GameModalsProps> = ({
               </>
             )}
           </div>
+
+          {/* Professional Sub-Nav Actions */}
+          <div className="mt-2 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCodexOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#d49a42]/35 bg-[#121c22]/90 px-3 py-1.5 text-xs font-bold text-[#e4d5b7] hover:border-[#ffe28a] cursor-pointer whitespace-nowrap"
+            >
+              <BookOpen className="h-3.5 w-3.5 text-[#f4cf75]" />
+              <span>Temple Codex & Lore</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setDownloadOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#d49a42]/35 bg-[#121c22]/90 px-3 py-1.5 text-xs font-bold text-[#e4d5b7] hover:border-[#ffe28a] cursor-pointer whitespace-nowrap"
+            >
+              <Download className="h-3.5 w-3.5 text-[#5cf2c2]" />
+              <span>Install App & GitHub</span>
+            </button>
+          </div>
         </div>
 
         {/* Bottom Hero Switcher (Bundled 3D GLB Warriors + Temple Heroes), Daily Trials & Start */}
-        <div className="pointer-events-auto flex w-full max-w-3xl flex-col items-center gap-2.5 mb-1">
-          <div className="flex w-full flex-col gap-1.5 rounded-xl border border-[#d49a42]/40 bg-[#0d151a]/92 p-2 shadow-2xl">
-            {/* Row 1: 4 Pre-Bundled 3D Warrior GLB Heroes */}
-            <div className="flex flex-wrap items-center justify-center gap-1.5">
+        <div className="pointer-events-auto flex w-full max-w-3xl flex-col items-center gap-2 mb-1">
+          <div className="flex w-full flex-col gap-1.5 rounded-xl border border-[#d49a42]/40 bg-[#0d151a]/95 p-2 shadow-2xl backdrop-blur-md">
+            {/* Row 1: 6 Pre-Bundled 3D Warrior GLB Heroes */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-1.5">
               {bundledHeroes.map((hero, idx) => {
                 const active = hud.heroId === 'custom_glb' && hud.customHeroUid === hero.id;
                 const loadingThis =
@@ -155,28 +206,28 @@ export const GameModals: React.FC<GameModalsProps> = ({
                     type="button"
                     disabled={isBusy}
                     onClick={() => void handleEquipBundledHero(hero)}
-                    className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left transition-colors cursor-pointer disabled:opacity-70 whitespace-nowrap shrink-0 ${
+                    className={`flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-left transition-colors cursor-pointer disabled:opacity-70 whitespace-nowrap ${
                       active
                         ? 'border-[#ffe28a] bg-[#2a2114] text-[#fff6dc]'
                         : 'border-[#d49a42]/30 bg-[#142027] text-[#dfcfb0] hover:border-[#ffe28a]/75'
                     }`}
                   >
                     <span
-                      className="flex h-6 w-6 items-center justify-center rounded-md"
+                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md"
                       style={{ backgroundColor: `${hero.accent}24`, color: hero.accent }}
                     >
                       {loadingThis ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <Loader2 className="h-3 w-3 animate-spin" />
                       ) : (
-                        <Crown className="h-3.5 w-3.5" />
+                        <Crown className="h-3 w-3" />
                       )}
                     </span>
-                    <span className="leading-tight">
-                      <span className="block text-xs font-extrabold tracking-wide">
+                    <span className="min-w-0 flex-1 leading-tight truncate">
+                      <span className="block text-[11px] font-extrabold tracking-wide truncate">
                         {hero.name}
                       </span>
-                      <span className="block text-[10px] font-medium opacity-75">
-                        {loadingThis ? 'Loading 3D...' : hero.role}
+                      <span className="block text-[9px] font-medium opacity-75 truncate">
+                        {loadingThis ? 'Loading...' : hero.role}
                       </span>
                     </span>
                   </button>
@@ -185,7 +236,7 @@ export const GameModals: React.FC<GameModalsProps> = ({
             </div>
 
             {/* Row 2: Temple Guardians, Custom .GLB File Loader & Daily Trials */}
-            <div className="flex flex-wrap items-center justify-center gap-1.5">
+            <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1 border-t border-[#d49a42]/20">
               {BUILTIN_HEROES.map(({ id, name, role, accent, Icon }) => {
                 const active = hud.heroId === id;
                 return (
@@ -203,7 +254,7 @@ export const GameModals: React.FC<GameModalsProps> = ({
                     }`}
                   >
                     <span
-                      className="flex h-5 w-5 items-center justify-center rounded"
+                      className="flex h-4 w-4 items-center justify-center rounded"
                       style={{ backgroundColor: `${accent}26`, color: accent }}
                     >
                       <Icon className="h-3 w-3" />
@@ -268,16 +319,154 @@ export const GameModals: React.FC<GameModalsProps> = ({
           <button
             type="button"
             onClick={onStart}
-            className="group flex items-center gap-3 rounded-lg border-2 border-[#ffe28a] bg-[#cf7a1d] px-10 py-3.5 text-lg font-black uppercase tracking-[0.18em] text-[#fff8e6] shadow-2xl transition-transform hover:scale-[1.03] hover:bg-[#e28923] active:scale-[0.98] cursor-pointer whitespace-nowrap"
+            className="group flex items-center gap-3 rounded-xl border-2 border-[#ffe28a] bg-[#cf7a1d] px-10 py-3 text-base font-black uppercase tracking-[0.18em] text-[#fff8e6] shadow-2xl transition-transform hover:scale-[1.03] hover:bg-[#e28923] active:scale-[0.98] cursor-pointer whitespace-nowrap"
           >
             <Play className="h-5 w-5 fill-current" />
             <span>Start Run</span>
           </button>
 
-          <p className="rounded-md bg-[#0e161b]/88 px-3.5 py-1.5 text-center text-xs font-medium tracking-wide text-[#d8cbb0]">
-            A / D or ← / → Lane · W / ↑ / Space Jump · S / ↓ Slide · Swipe on Touch · Esc Pause
+          <p className="rounded-md bg-[#0e161b]/88 px-3 py-1 text-center text-xs font-medium tracking-wide text-[#d8cbb0]">
+            A/D or Left/Right Lane · W/Up Jump · S/Down Slide · Swipe on Touch · Esc Pause
           </p>
         </div>
+
+        {/* Temple Codex & Lore Modal */}
+        {codexOpen && (
+          <div className="pointer-events-auto fixed inset-0 z-40 flex items-center justify-center bg-[#080d11]/85 p-4">
+            <div className="w-full max-w-xl rounded-2xl border border-[#d49a42]/60 bg-[#10191f] p-6 shadow-2xl">
+              <div className="flex items-start justify-between gap-4 border-b border-[#d49a42]/25 pb-4">
+                <div>
+                  <h3 className="font-display text-xl font-bold tracking-wide text-[#ffe396]">
+                    Temple Codex & Lore
+                  </h3>
+                  <p className="text-xs text-[#b4a78c]">
+                    Ancient mysteries of the Surya Sanctuary & the Stone Guardian
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCodexOpen(false)}
+                  aria-label="Close Codex"
+                  className="rounded-lg border border-[#d49a42]/35 bg-[#17232b] p-2 text-[#d8cbb0] hover:text-[#ffe396] cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="mt-4 flex flex-col gap-4 text-xs sm:text-sm text-[#e4d5b7] max-h-[60vh] overflow-y-auto pr-2">
+                <div>
+                  <h4 className="font-bold text-[#ffe396]">The Golden Surya Seal</h4>
+                  <p className="mt-1 text-[#b4a78c] leading-relaxed">
+                    Forged in the heart of the sun temple, the Surya Seal maintains the eternal equilibrium of the jungle sanctuary. Snatching it awakens the colossal Stone Guardian who slumbers beneath the altar floor.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-bold text-[#ffe396]">The Stone Guardian</h4>
+                  <p className="mt-1 text-[#b4a78c] leading-relaxed">
+                    A colossal basalt automaton animated by ancient magmas and rune magic. It relentlessly pursues any mortal brave enough to steal sacred relics. Stumbling or hesitating allows the Guardian to close the distance instantly.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-bold text-[#ffe396]">Obstacles & Power-Ups</h4>
+                  <p className="mt-1 text-[#b4a78c] leading-relaxed">
+                    Navigate spiked barricades, swinging blade arches, rolling monolith boulders, and razor-sharp chakra traps. Collect Jade Shields, Magnetic Amulets, and Solar Speed Boosts to crush records.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 border-t border-[#d49a42]/25 pt-4 text-right">
+                <button
+                  type="button"
+                  onClick={() => setCodexOpen(false)}
+                  className="rounded-lg border border-[#ffe28a] bg-[#cf7a1d] px-5 py-2 text-xs font-bold text-[#fff8e6] hover:bg-[#e28923] cursor-pointer"
+                >
+                  Close Codex
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Install App & GitHub Workflow Modal */}
+        {downloadOpen && (
+          <div className="pointer-events-auto fixed inset-0 z-40 flex items-center justify-center bg-[#080d11]/85 p-4">
+            <div className="w-full max-w-lg rounded-2xl border border-[#d49a42]/60 bg-[#10191f] p-6 shadow-2xl">
+              <div className="flex items-start justify-between gap-4 border-b border-[#d49a42]/25 pb-4">
+                <div className="flex items-center gap-2.5">
+                  <Github className="h-6 w-6 text-[#5cf2c2]" />
+                  <div>
+                    <h3 className="font-display text-lg font-bold tracking-wide text-[#ffe396]">
+                      GitHub One-Click Build & Live App Link
+                    </h3>
+                    <p className="text-xs text-[#b4a78c]">Automated workflow & direct access</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDownloadOpen(false)}
+                  aria-label="Close Download"
+                  className="rounded-lg border border-[#d49a42]/35 bg-[#17232b] p-2 text-[#d8cbb0] hover:text-[#ffe396] cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="mt-4 flex flex-col gap-4 text-xs sm:text-sm text-[#e4d5b7]">
+                {/* Live Shared Link */}
+                <div className="rounded-xl border border-[#d49a42]/45 bg-[#15222b] p-4">
+                  <div className="font-bold text-[#ffe396]">Direct Live App Link:</div>
+                  <div className="mt-1 flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value="https://ais-pre-aebryrzsd6sz47u67bzhp2-209485732558.asia-southeast1.run.app"
+                      className="w-full rounded-lg border border-[#d49a42]/30 bg-[#0a1014] px-3 py-2 font-mono text-xs text-[#f6eedc] select-all"
+                    />
+                    <a
+                      href="https://ais-pre-aebryrzsd6sz47u67bzhp2-209485732558.asia-southeast1.run.app"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-[#ffe28a] bg-[#cf7a1d] px-3.5 py-2 text-xs font-bold text-[#fff8e6] hover:bg-[#e28923]"
+                    >
+                      <span>Open</span>
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  </div>
+                </div>
+
+                {/* GitHub Workflow info */}
+                <div className="rounded-xl border border-[#5cf2c2]/40 bg-[#102422] p-4">
+                  <p className="font-bold text-[#8efce2]">GitHub Actions Workflow Enabled (.github/workflows/build.yml)</p>
+                  <p className="mt-1 text-xs text-[#b4a78c] leading-relaxed">
+                    Whenever you push changes to your GitHub repository, GitHub Actions automatically runs `npm install` and `npm run build`, packaging the game into a downloadable `.zip` artifact (`surya-run-game-dist`) in the GitHub Actions "Artifacts" tab with a single click!
+                  </p>
+                </div>
+
+                {/* PWA Install */}
+                <div className="text-center pt-1">
+                  <button
+                    type="button"
+                    onClick={handleInstallClick}
+                    className="inline-flex items-center gap-2 rounded-lg border border-[#5cf2c2] bg-[#1a3834] px-5 py-2.5 text-xs font-extrabold text-[#9cfbe0] hover:bg-[#224843] cursor-pointer shadow-lg"
+                  >
+                    <Smartphone className="h-4 w-4" />
+                    <span>Install as PWA App on Phone / PC</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-6 border-t border-[#d49a42]/25 pt-4 text-right">
+                <button
+                  type="button"
+                  onClick={() => setDownloadOpen(false)}
+                  className="rounded-lg border border-[#ffe28a] bg-[#cf7a1d] px-5 py-2 text-xs font-bold text-[#fff8e6] hover:bg-[#e28923] cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Daily Trials Modal */}
         {missionsOpen && (

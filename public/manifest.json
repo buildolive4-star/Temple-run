@@ -1,0 +1,16 @@
+{
+  "name": "Surya Run: Temple Escape",
+  "short_name": "Surya Run",
+  "description": "A 3D endless temple-runner game with articulated character kinematics, ancient sun-temple ruins, dynamic hazards, and power-ups.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0e171d",
+  "theme_color": "#0e171d",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
