@@ -1,0 +1,6 @@
+{
+  "name": "Surya Run: Temple Escape",
+  "description": "A 3D endless temple-runner game with articulated character kinematics, ancient sun-temple ruins, dynamic hazards, power-ups, and procedural Web Audio.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
